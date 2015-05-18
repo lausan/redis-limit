@@ -118,6 +118,77 @@ test("limiter refills for different clients", function(t) {
 
 });
 
+test("failed requests prevent further requests", function(t) {
+  t.plan(3);
+  var client = redis.createClient();
+  var options = {
+    redis: client,
+    maxInInterval: 2, // allow 2 requests
+    interval: 4000 // every 4000 milliseconds
+  };
+  var limiter = RedisRateLimiter(options);
+
+  async.parallel([
+    function(callback) {
+      limiter("foo", callback);
+    },
+    function(callback) {
+      limiter("bar", callback);
+    },
+    function(callback) {
+      limiter("foo", callback);
+    },
+    function(callback) {
+      limiter("bar", callback);
+    },
+    function(callback) {
+      limiter("foo", callback);
+    },
+    function(callback) {
+      limiter("bar", callback);
+    }
+  ], function(err, tokens) {
+    if (err) {
+      client.quit();
+      return t.fail(err);
+    }
+    t.similar(tokens, [0, 0, 0, 0, 2000, 2000]);
+
+    setTimeout(function() {
+      async.series([
+        function(callback) {
+          limiter("foo", callback);
+        },
+        function(callback) {
+          limiter("bar", callback);
+        }
+      ], function(err, tokens) {
+        if (err) {
+          client.quit();
+          return t.fail(err);
+        }
+        t.similar(tokens, [2000, 2000]);
+        setTimeout(function() {
+          async.series([
+            function(callback) {
+              limiter("foo", callback);
+            },
+            function(callback) {
+              limiter("bar", callback);
+            }
+          ], function(err, tokens) {
+            client.quit();
+            if (err) return t.fail(err);
+            t.similar(tokens, [2000, 2000]);
+          });
+        }, 1000);
+      });
+    }, 1000);
+
+  });
+
+});
+
 test("limiter doesn't allow two requests within minDifference", function(t) {
   t.plan(3);
   var client = redis.createClient();
