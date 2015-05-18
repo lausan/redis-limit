@@ -35,6 +35,13 @@ limiter("key", function(err, result) {
     // 0 if there are tokens in the bucket now
     console.log(result);
 });
+
+// calling load will SCRIPT LOAD the lua script in redis and use EVALSHA for much better performance
+limiter.load(function(err) {
+    limiter("key", function(err, result) {
+        console.log(result);
+    });
+});
 ```
 
 ### Options
