@@ -474,7 +474,6 @@ test("limiter doesn't allow two requests within minDifference - load", function(
         return t.fail(err);
       }
       t.equal(tokens[0], 0);
-      console.log("tokens:", tokens);
       t.ok(tokens[1] > 10 && tokens[1] < 2000);
       setTimeout(function() {
         limiter("foo", function(err, tokens) {
