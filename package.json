@@ -1,0 +1,31 @@
+{
+  "name": "redis-rate-limiter",
+  "version": "0.0.0",
+  "description": "redis backed rate limiter using the token bucket algorithm",
+  "main": "index.js",
+  "scripts": {
+    "test": "tap test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lausan/redis-rate-limiter.git"
+  },
+  "keywords": [
+    "redis",
+    "rate-limiter",
+    "token-bucket"
+  ],
+  "author": "lausan",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/lausan/redis-rate-limiter/issues"
+  },
+  "homepage": "https://github.com/lausan/redis-rate-limiter",
+  "devDependencies": {
+    "async": "^0.9.0",
+    "tap": "^1.0.5"
+  },
+  "dependencies": {
+    "redis": "^0.12.1"
+  }
+}
