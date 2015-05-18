@@ -12,6 +12,7 @@ function RedisRateLimiter(options) {
       maxInInterval = options.maxInInterval,
       minDifference = options.minDifference || 0,
       namespace = options.namespace || "redis-rate-limiter-" + Math.random().toString(36).slice(2);
+  var result, sha;
 
   assert(interval === Infinity || interval > 0 && isInt(options.interval), "`options.interval` must be a positive integer");
   assert(maxInInterval > 0 && isInt(maxInInterval), "`options.maxInInterval must be a positive integer");
@@ -28,7 +29,7 @@ function RedisRateLimiter(options) {
              = maxInInterval
   */
 
-  return function (id, cb) {
+  result = function (id, cb) {
     if (!cb) {
       cb = id;
       id = "";
@@ -43,7 +44,7 @@ function RedisRateLimiter(options) {
     var lastAccessedKey = key + ":timestamp";
 
     var args = [
-      lua, // lua script as string or buffer
+      sha || lua, // sha from SCRIPT LOAD or lua script as string or buffer
       2, // number of keys
       tokenKey,
       lastAccessedKey,
@@ -54,7 +55,7 @@ function RedisRateLimiter(options) {
       isFinite(interval) ? Math.ceil(interval / 1000) : 0 // interval in seconds for redis ttl
     ];
 
-    redis.eval(args, function(err, res) {
+    redis[sha ? "evalsha" : "eval"](args, function(err, res) {
       if (err) return cb(err);
       res = Number(res);
       if (res < 0) {
@@ -70,6 +71,17 @@ function RedisRateLimiter(options) {
     });
 
   }
+
+  result.load = function(cb) {
+    redis.script(["LOAD", lua], function(err, result) {
+      if (err) return cb(err);
+      sha = result;
+      cb(null);
+    });
+  }
+
+  return result;
+
 }
 
 module.exports = RedisRateLimiter;
