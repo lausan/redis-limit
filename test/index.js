@@ -4,6 +4,67 @@ var async = require("async");
 
 var test = require("tap").test;
 
+
+test("input validation", function(t) {
+
+  function options() {
+    return {
+      redis: redis.createClient(),
+      interval: 1000,
+      maxInInterval: 10,
+    };
+  }
+
+  t.test("those options work", function(tt) {
+    tt.plan(1);
+    var o = options();
+    tt.doesNotThrow(function() { RedisRateLimiter(o); });
+    o.redis.quit();
+  });
+
+  t.test("redis client must be provided", function(tt) {
+    tt.plan(1);
+    var o = options();
+    o.redis.quit();
+    delete o.redis;
+    tt.throws(function() { RedisRateLimiter(o); });
+  });
+
+  t.test("interval must be a positive integer or Infinity", function(tt) {
+    tt.plan(3);
+    var o = options();
+    o.interval = -1;
+    tt.throws(function() { RedisRateLimiter(o); });
+    o.interval = 3.5;
+    tt.throws(function() { RedisRateLimiter(o); });
+    o.interval = Infinity;
+    tt.doesNotThrow(function() { RedisRateLimiter(o); });
+    o.redis.quit();
+  });
+
+  t.test("maxInInterval must be a positive integer", function(tt) {
+    tt.plan(2);
+    var o = options();
+    o.maxInInterval = -1;
+    tt.throws(function() { RedisRateLimiter(o); });
+    o.maxInInterval = 4.2;
+    tt.throws(function() { RedisRateLimiter(o); });
+    o.redis.quit();
+  });
+
+  t.test("limiter callback must be a function", function(tt) {
+    tt.plan(2);
+    var o = options();
+    var limiter = RedisRateLimiter(o);
+    tt.throws(function() { limiter(); });
+    tt.throws(function() { limiter("foo"); });
+    o.redis.quit();
+  });
+
+  t.end();
+
+});
+
 test("limiter consumes tokens for different clients", function(t) {
   t.plan(1);
   var client = redis.createClient();
