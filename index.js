@@ -14,6 +14,7 @@ function RedisRateLimiter(options) {
       namespace = options.namespace || "redis-rate-limiter-" + Math.random().toString(36).slice(2);
   var result, sha;
 
+  assert(redis, "`options.redis` must be a redis client");
   assert(interval === Infinity || interval > 0 && isInt(options.interval), "`options.interval` must be a positive integer");
   assert(maxInInterval > 0 && isInt(maxInInterval), "`options.maxInInterval must be a positive integer");
 
